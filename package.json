@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "cd dist && nodemon index.js",
+    "start": "node dist/index.js",
+    "build": "tsc --b"
   },
   "keywords": [],
   "author": "",
