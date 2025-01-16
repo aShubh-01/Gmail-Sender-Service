@@ -14,6 +14,7 @@ const sendEmailBodySchema = zod.object({                            // DEFINE TH
     senderGmailAddress: zod.string().includes('@gmail.com', { message: "Sender's Gmail must include valid tokens/domains like '@', 'gmail.com'"}).min(11, { message: "Sender's Gmail address cannot be empty, eg. 'sender123@gmail.com'"} ),
     senderGmailAppPassword: zod.string().min(16, { message: "Sender's Gmail App Password is 4x4 long string, eg. 'abcd efgh ijkl mnop'"} ),
     receiverGmailAddress: zod.string().includes('@gmail.com', { message: "Receiver's Gmail must include valid tokens/domains like '@', 'gmail.com'"}).min(11, { message: "Receiver's Gmail address cannot be empty, eg. 'receiver123@gmail.com'" } ),
+    ccGmailAddresses: zod.array(zod.string(), { message: "Carbon Copy Gmail Addresse(s) must be sent inside array"}),
     gmailSubject: zod.string().optional(),
     gmailBody: zod.string().min(1, { message: 'Email Body cannot be empty'} ),
 })
@@ -21,8 +22,9 @@ const sendEmailBodySchema = zod.object({                            // DEFINE TH
 gmailSenderApp.head('/');
 gmailSenderApp.get('/', (req, res) => {res.send("Gmail Sender API Service Working")});
 
+
 gmailSenderApp.post('/sendGmail', async (req, res) : Promise<Response | any> => {
-    const { senderGmailAddress, senderGmailAppPassword, receiverGmailAddress, gmailSubject, gmailBody } = req.body;
+    const { senderGmailAddress, senderGmailAppPassword, receiverGmailAddress, ccGmailAddresses, gmailSubject, gmailBody } = req.body;
 
     try {
         const parseResponse = sendEmailBodySchema.safeParse(req.body);
@@ -51,6 +53,15 @@ gmailSenderApp.post('/sendGmail', async (req, res) : Promise<Response | any> => 
 
         try {
             await transporter.sendMail(mailOptions);
+            ccGmailAddresses.forEach(async (receiverCcAddress : string) => {
+                const mailOptions = {
+                    from: senderGmailAddress,
+                    to: receiverCcAddress,
+                    subject: gmailSubject,
+                    html: gmailBody
+                }
+                await transporter.sendMail(mailOptions);
+            })
         } catch (err) {
             return res.status(500).json({
                 message: 'Unable to send gmail'
